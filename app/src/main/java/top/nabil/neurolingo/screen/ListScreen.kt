@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,7 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -91,25 +91,53 @@ fun ListScreen(
                     top = 16.dp,
                     start = 16.dp,
                     end = 16.dp,
-                    bottom = 64.dp
                 ),
         ) {
             if (state.value.isDuringSession) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                 ) {
+
+                    Text(text = state.value.delta.toString())
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Raw data",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.rawYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
                     Canvas(
                         modifier = Modifier
-                            .fillMaxHeight(0.2f)
+                            .height(300.dp)
                             .fillMaxWidth()
                             .background(Color.Black)
                     ) {
                         for (l in state.value.rawGraph) {
-                            val yS = (l[1] - 1) / 19999 * size.height + 1
-//                                if (l[1] > size.height) size.height else l[1]
-                            val yE = (l[3] - 1) / 19999 * size.height + 1
-//                                if (l[3] > size.height) size.height else l[3]
+                            var yS = (l[1] - 1) / 1999 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE = (l[3] - 1) / 1999 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
 
                             drawLine(
                                 color = Color.Green,
@@ -123,21 +151,430 @@ fun ListScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Delta",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.deltaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
 
                     Canvas(
                         modifier = Modifier
-                            .fillMaxHeight(0.2f)
+                            .height(300.dp)
                             .fillMaxWidth()
                             .background(Color.Black)
                     ) {
-                        drawLine(
-                            color = Color.Green,
-                            start = Offset(0f, 0f),
-                            end = Offset(size.width, size.height),
-                            strokeWidth = 1.dp.toPx(),
+                        for (l in state.value.deltaGraph) {
+                            var yS = (l[1] - 1) / 1000000 * (300.dp.toPx() + 1)
+                            var yE = (l[3] - 1) / 1000000 * (300.dp.toPx() + 1)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetDeltaGraph()
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Theta",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.thetaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
                         )
                     }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                    ) {
+                        for (l in state.value.thetaGraph) {
+                            var yS =
+                                (l[1] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE =
+                                (l[3] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetThetaGraph()
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Low Alpha",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.lowAlphaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                    ) {
+                        for (l in state.value.lowAlphaGraph) {
+                            var yS =
+                                (l[1] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE =
+                                (l[3] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetLowAlphaGraph()
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "High Alpha",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.highAlphaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                    ) {
+                        for (l in state.value.highAlphaGraph) {
+                            var yS =
+                                (l[1] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE =
+                                (l[3] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetHighAlphaGraph()
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Low Beta",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.lowBetaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                    ) {
+                        for (l in state.value.lowBetaGraph) {
+                            var yS =
+                                (l[1] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE =
+                                (l[3] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetLowBetaGraph()
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "High Beta",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.highBetaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                    ) {
+                        for (l in state.value.highBetaGraph) {
+                            var yS =
+                                (l[1] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE =
+                                (l[3] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetHighBetaGraph()
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Low Gamma",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.lowGammaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                    ) {
+                        for (l in state.value.lowGammaGraph) {
+                            var yS =
+                                (l[1] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE =
+                                (l[3] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetLowGammaGraph()
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Middle Gamma",
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = state.value.middleGammaYS.toString(),
+                            fontFamily = Kanit,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                    ) {
+                        for (l in state.value.middleGammaGraph) {
+                            var yS =
+                                (l[1] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+                            var yE =
+                                (l[3] - 1) / 1000000 * (300.dp.toPx() + 1) + (300.dp.toPx() / 2)
+
+                            if (yE > size.height) {
+                                yE = size.height
+                            }
+                            if (yS > size.height) {
+                                yS = size.height
+                            }
+
+                            drawLine(
+                                color = Color.Green,
+                                start = Offset(l[0], yS),
+                                end = Offset(l[2], yE),
+                                strokeWidth = 2.dp.toPx(),
+                            )
+                            if (l[2] > size.width) {
+                                vm.resetMiddleGammaGraph()
+                            }
+                        }
+                    }
+
                 }
             } else {
                 LazyColumn(
@@ -163,7 +600,7 @@ fun ListScreen(
 
                     items(
                         items = state.value.scannedBluetooth,
-                        key = { it.address }
+                        key = { "${it.address}${(1..100).random()}" }
                     ) {
                         Row(
                             modifier = Modifier
@@ -242,8 +679,8 @@ fun ListScreen(
 
             Button(
                 modifier = Modifier
-                    .padding(horizontal = 32.dp)
-                    .align(Alignment.BottomCenter),
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 64.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (state.value.isConnected) {
                         Color(0xFF3A9D3E)

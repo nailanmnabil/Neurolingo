@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.cli.jvm.main
 import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
@@ -61,9 +62,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.lifecycle.viewmodel.compose)
-    implementation(files("src/libs/libStreamSDK_v1.2.0.jar"))
-    implementation(files("src/libs/NskAlgoSdk.jar"))
-    
+
+    implementation(files("src/libs/libStreamSDK.jar"))
+    implementation(files("src/libs/libNskAlgoSdk.jar"))
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

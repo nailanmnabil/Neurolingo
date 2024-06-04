@@ -76,16 +76,12 @@ class MainActivity : ComponentActivity() {
         val bluetoothController = BluetoothController(this)
 
         setContent {
-            NeurolingoTheme(
-
-            ) {
+            NeurolingoTheme {
                 val internalDir: File = this.filesDir
-                val fileName = "${Random.nextInt()}.txt"
-                val filePath: File = File(internalDir, fileName)
 
                 val vm = viewModel<ListViewModel>(
                     factory = vmFactoryHelper {
-                        ListViewModel(bluetoothController, filePath.absolutePath)
+                        ListViewModel(bluetoothController, internalDir.absolutePath)
                     }
                 )
                 ListScreen(vm = vm, context = this)
