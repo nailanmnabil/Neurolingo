@@ -575,6 +575,11 @@ fun ListScreen(
                         }
                     }
 
+                    Text(text = (state.value.timer).toString())
+                    Text(text = (state.value.attention).toString())
+                    Text(text = (state.value.panicCounter).toString())
+                    Text(text = (state.value.meditation).toString())
+                    Text(text = (if (state.value.timer == 0) 0 else state.value.panicCounter / state.value.timer).toString())
                 }
             } else {
                 LazyColumn(

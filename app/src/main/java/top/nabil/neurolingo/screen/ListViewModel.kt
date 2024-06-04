@@ -45,6 +45,9 @@ data class BluetoothUiState(
     val isDuringSession: Boolean = false,
     val selectedAddress: String = "",
     val timer: Int = 0,
+    var panicCounter: Int = 0,
+    val attention: Int = 0,
+    val meditation: Int = 0,
     val delta: Float = 0f,
 
     val rawXS: Float = 0f,
@@ -180,8 +183,7 @@ class ListViewModel(
         _state.update {
             it.copy(
                 isDuringSession = true,
-                isConnected = false,
-                timer = _state.value.timer + 1
+                isConnected = false
             )
         }
         val i = NskAlgoStart(false)
@@ -472,10 +474,25 @@ class ListViewModel(
 
                 MindDataType.CODE_MEDITATION -> {
                     Log.d(TAG, "CODE_MEDITATION " + msg.arg1)
+                    _state.update {
+                        it.copy(meditation = msg.arg1)
+                    }
                 }
 
                 MindDataType.CODE_ATTENTION -> {
                     Log.d(TAG, "CODE_ATTENTION " + msg.arg1)
+                    _state.update {
+                        it.copy(
+                            attention = msg.arg1,
+                            timer = _state.value.timer + 1
+                        )
+                    }
+
+                    if (_state.value.attention > 80 && _state.value.meditation < 20) {
+                        _state.update {
+                            it.copy(panicCounter = _state.value.panicCounter++)
+                        }
+                    }
                 }
 
                 MindDataType.CODE_POOR_SIGNAL -> {
