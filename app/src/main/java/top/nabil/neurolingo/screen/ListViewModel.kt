@@ -11,7 +11,9 @@ import com.neurosky.AlgoSdk.NskAlgoDataType
 import com.neurosky.AlgoSdk.NskAlgoSdk
 import com.neurosky.AlgoSdk.NskAlgoSdk.NskAlgoInit
 import com.neurosky.AlgoSdk.NskAlgoSdk.NskAlgoStart
+import com.neurosky.AlgoSdk.NskAlgoSdk.OnAttAlgoIndexListener
 import com.neurosky.AlgoSdk.NskAlgoSdk.OnBPAlgoIndexListener
+import com.neurosky.AlgoSdk.NskAlgoSdk.OnMedAlgoIndexListener
 import com.neurosky.AlgoSdk.NskAlgoSdk.OnSignalQualityListener
 import com.neurosky.AlgoSdk.NskAlgoSdk.OnStateChangeListener
 import com.neurosky.AlgoSdk.NskAlgoType
@@ -42,7 +44,7 @@ data class BluetoothUiState(
     val isConnected: Boolean = false,
     val isDuringSession: Boolean = false,
     val selectedAddress: String = "",
-
+    val timer: Int = 0,
     val delta: Float = 0f,
 
     val rawXS: Float = 0f,
@@ -137,6 +139,16 @@ class ListViewModel(
             _state.update { it.copy(delta = delta) }
         }
 
+    private val attAlgoListener: OnAttAlgoIndexListener =
+        OnAttAlgoIndexListener { value ->
+            Log.i(TAG, "NskAlgoAttAlgoIndexListener: Attention:$value");
+        }
+
+    private val meditationAlgoListener: OnMedAlgoIndexListener =
+        OnMedAlgoIndexListener { value ->
+            Log.i(TAG, "NskAlgoMedAlgoIndexListener: Meditation:$value");
+        }
+
     private val stateChangeAlgoListener: OnStateChangeListener =
         OnStateChangeListener { state, reason ->
             Log.i(TAG, "On State Change: $state [reason:$reason]");
@@ -151,6 +163,8 @@ class ListViewModel(
         nskAlgoSdk.setOnBPAlgoIndexListener(bpAlgoListener)
         nskAlgoSdk.setOnStateChangeListener(stateChangeAlgoListener)
         nskAlgoSdk.setOnSignalQualityListener(qualityAlgoListener)
+        nskAlgoSdk.setOnAttAlgoIndexListener(attAlgoListener)
+        nskAlgoSdk.setOnMedAlgoIndexListener(meditationAlgoListener)
         NskAlgoInit(NskAlgoType.NSK_ALGO_TYPE_BP.value, recordedFilePath)
     }
 
@@ -166,7 +180,8 @@ class ListViewModel(
         _state.update {
             it.copy(
                 isDuringSession = true,
-                isConnected = false
+                isConnected = false,
+                timer = _state.value.timer + 1
             )
         }
         val i = NskAlgoStart(false)
