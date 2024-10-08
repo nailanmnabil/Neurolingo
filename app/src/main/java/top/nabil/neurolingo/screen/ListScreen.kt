@@ -3,6 +3,8 @@ package top.nabil.neurolingo.screen
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -64,6 +66,18 @@ fun ListScreen(
                         Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                     }
                 }
+            }
+        }
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) {
+            vm.startRecord(context, uri)
+        } else {
+            coroutineScope.launch {
+                Toast.makeText(context, "Mohon pilih lokasi penyimpanan data", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -701,7 +715,7 @@ fun ListScreen(
                     } else if (state.value.isDuringSession) {
                         vm.stopRecord()
                     } else if (state.value.isConnected) {
-                        vm.startRecord()
+                        launcher.launch("eeg_recording_${System.currentTimeMillis()}.csv")
                     } else {
                         vm.startScan()
                     }

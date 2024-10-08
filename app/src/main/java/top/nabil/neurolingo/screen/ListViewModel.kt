@@ -1,6 +1,8 @@
 package top.nabil.neurolingo.screen
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.Uri
 import android.os.Handler
 import android.os.Message
 import android.util.Log
@@ -22,6 +24,9 @@ import com.neurosky.connection.DataType.MindDataType
 import com.neurosky.connection.EEGPower
 import com.neurosky.connection.TgStreamHandler
 import com.neurosky.connection.TgStreamReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,8 +34,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import top.nabil.neurolingo.bluetooth.BluetoothController
 import top.nabil.neurolingo.bluetooth.BluetoothDeviceDomain
+import java.io.OutputStreamWriter
 
 private const val TAG = "tg-callback"
 
@@ -133,6 +141,9 @@ class ListViewModel(
     private var rawDataIndex = 0
     private val nskAlgoSdk: NskAlgoSdk = NskAlgoSdk()
 
+    private var saveJob: Job? = null
+    private var outputStream: OutputStreamWriter? = null
+
     private val bpAlgoListener: OnBPAlgoIndexListener =
         OnBPAlgoIndexListener { delta, theta, alpha, beta, gamma ->
             Log.i(
@@ -179,7 +190,7 @@ class ListViewModel(
         bluetoothController.stopDiscovery()
     }
 
-    fun startRecord() {
+    fun startRecord(context: Context, backupUri: Uri) {
         _state.update {
             it.copy(
                 isDuringSession = true,
@@ -188,6 +199,9 @@ class ListViewModel(
         }
         val i = NskAlgoStart(false)
         Log.d(TAG, "Berhasil start algo ga $i")
+
+        // Start the background saving job
+        startSavingData(context, backupUri)
     }
 
     fun stopRecord() {
@@ -197,8 +211,10 @@ class ListViewModel(
         tgStreamReader?.stopRecordRawData()
         tgStreamReader?.stop()
         tgStreamReader?.close()
-    }
 
+        // Stop the background saving job
+        stopSavingData()
+    }
     fun resetRawGraph() {
         _state.update {
             it.copy(
@@ -296,6 +312,62 @@ class ListViewModel(
                 middleGammaXE = 0f
             )
         }
+    }
+
+    private fun startSavingData(context: Context, backupUri: Uri) {
+        saveJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                context.contentResolver.openOutputStream(backupUri)?.let { stream ->
+                    val outputStream = OutputStreamWriter(stream).buffered()
+
+                    val csvHeader = listOf(
+                        "Timestamp",
+                        "Attention",
+                        "Meditation",
+                        "Delta",
+                        "Theta",
+                        "Low Alpha",
+                        "High Alpha",
+                        "Low Beta",
+                        "High Beta",
+                        "Low Gamma",
+                        "Middle Gamma"
+                    ).joinToString(",")
+                    outputStream.write("$csvHeader\n")
+
+                    while (isActive) {
+                        val currentState = _state.value
+                        val csvLine = listOf(
+                            System.currentTimeMillis(),
+                            currentState.attention,
+                            currentState.meditation,
+                            currentState.delta,
+                            currentState.thetaGraph.lastOrNull()?.get(3) ?: 0f,
+                            currentState.lowAlphaGraph.lastOrNull()?.get(3) ?: 0f,
+                            currentState.highAlphaGraph.lastOrNull()?.get(3) ?: 0f,
+                            currentState.lowBetaGraph.lastOrNull()?.get(3) ?: 0f,
+                            currentState.highBetaGraph.lastOrNull()?.get(3) ?: 0f,
+                            currentState.lowGammaGraph.lastOrNull()?.get(3) ?: 0f,
+                            currentState.middleGammaGraph.lastOrNull()?.get(3) ?: 0f
+                        ).joinToString(",")
+
+                        outputStream.write("$csvLine\n")
+                        outputStream.flush()
+
+                        delay(1000) // Write every second, adjust as needed
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun stopSavingData() {
+        saveJob?.cancel()
+        saveJob = null
+        outputStream?.close()
+        outputStream = null
     }
 
     fun connect(address: String) {
